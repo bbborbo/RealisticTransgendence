@@ -4,11 +4,21 @@ using R2API;
 using R2API.Utils;
 using RoR2;
 using System;
+using System.Security;
+using System.Security.Permissions;
 using static R2API.RecalculateStatsAPI.StatHookEventArgs;
+
+
+#pragma warning disable CS0618 // Type or member is obsolete
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+#pragma warning restore CS0618 // Type or member is obsolete
+[module: UnverifiableCode]
+#pragma warning disable 
 
 namespace RealisticTransgendence
 {
-    [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInDependency(R2API.LanguageAPI.PluginGUID)]
+    [R2APISubmoduleDependency(nameof(LanguageAPI))]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [BepInDependency("com.Borbo.Transgendence", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin(guid, modName, version)]
@@ -16,7 +26,7 @@ namespace RealisticTransgendence
     {
         public const string guid = "com.TransRights.RealisticTransgendence";
         public const string modName = "RealisticTransgendence";
-        public const string version = "1.0.0";
+        public const string version = "2.0.0";
         internal static ConfigFile CustomConfigFile { get; set; }
         public static ConfigEntry<bool> OnlyOneExtraJump { get; set; }
 
@@ -39,7 +49,7 @@ namespace RealisticTransgendence
             OnlyOneExtraJump = CustomConfigFile.Bind<bool>(
                 "Only One Extra Jump",
                 "Should TRANSGENDENCE only provide one additional jump",
-                false,
+                true,
                 "Set this to FALSE if you want TRANSGENDENCE's realistic double jumps to stack."
                 );
         }
@@ -47,14 +57,17 @@ namespace RealisticTransgendence
         private void TransgendenceDoubleJump(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self)
         {
             orig(self);
-            int transCount = self.inventory.GetItemCount(RoR2Content.Items.ShieldOnly);
-            if (!OnlyOneExtraJump.Value)
+            if(self.inventory != null)
             {
-                self.maxJumpCount += transCount;
-            }
-            else if (transCount > 0)
-            {
-                self.maxJumpCount += 1;
+                int transCount = self.inventory.GetItemCount(RoR2Content.Items.ShieldOnly);
+                if (!OnlyOneExtraJump.Value)
+                {
+                    self.maxJumpCount += transCount;
+                }
+                else if (transCount > 0)
+                {
+                    self.maxJumpCount += 1;
+                }
             }
         }
     }
